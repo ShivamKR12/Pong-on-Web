@@ -12,6 +12,9 @@ import asyncio
 
 async def main():
 
+    __ANDROID__ = hasattr(sys, "getandroidapilevel")
+    __EMSCRIPTEN__ = hasattr(sys, "_emscripten_info")
+
     # The Block class is the most basic sprite in this project.
     # It inherits from pygame.sprite.Sprite, which allows it to be used inside sprite groups.
     # This class is mainly a helper so that we do not have to repeat the same code
@@ -227,7 +230,16 @@ async def main():
 
     screen_width = 1300
     screen_height = 650
-    screen = pygame.display.set_mode((screen_width, screen_height))
+
+    if __ANDROID__:
+        screen = pygame.display.set_mode((screen_width, screen_height),
+                                        pygame.SCALED | pygame.FULLSCREEN)
+    elif __EMSCRIPTEN__:
+        screen = pygame.display.set_mode((screen_width, screen_height), 0)
+    else:
+        screen = pygame.display.set_mode((screen_width, screen_height),
+                                        pygame.SCALED | pygame.RESIZABLE)
+    
     pygame.display.set_caption("Pong")
 
     bg_color = pygame.Color("#2F373F")
@@ -250,6 +262,8 @@ async def main():
 
     game_manager = GameManager(ball_sprite, paddle_group)
 
+    fingers = {}
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -265,6 +279,19 @@ async def main():
                     player.movement += player.speed
                 if event.key == pygame.K_DOWN:
                     player.movement -= player.speed
+            if event.type == pygame.FINGERDOWN:
+                fingers[event.finger_id] = (event.x, event.y)
+            if event.type == pygame.FINGERMOTION:
+                fingers[event.finger_id] = (event.x, event.y)
+            if event.type == pygame.FINGERUP:
+                if event.finger_id in fingers:
+                    del fingers[event.finger_id]
+        
+        if fingers:
+            finger_id = list(fingers.keys())[0]
+            fx, fy = fingers[finger_id]
+            touch_y = int(fy * screen_height)
+            player.rect.centery = touch_y
 
         screen.fill(bg_color)
         pygame.draw.rect(screen, accent_color, middle_strip)
