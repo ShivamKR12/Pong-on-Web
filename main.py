@@ -265,33 +265,35 @@ async def main():
     fingers = {}
 
     while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP:
-                    player.movement -= player.speed
-                if event.key == pygame.K_DOWN:
-                    player.movement += player.speed
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_UP:
-                    player.movement += player.speed
-                if event.key == pygame.K_DOWN:
-                    player.movement -= player.speed
-            if event.type == pygame.FINGERDOWN:
-                fingers[event.finger_id] = (event.x, event.y)
-            if event.type == pygame.FINGERMOTION:
-                fingers[event.finger_id] = (event.x, event.y)
-            if event.type == pygame.FINGERUP:
-                if event.finger_id in fingers:
-                    del fingers[event.finger_id]
-        
+        pygame.event.pump()
+        for event in pygame.event.get(pygame.QUIT, pump=False):
+            pygame.quit()
+            sys.exit()
+        for event in pygame.event.get(pygame.KEYDOWN, pump=False):
+            if event.key == pygame.K_UP:
+                player.movement -= player.speed
+            if event.key == pygame.K_DOWN:
+                player.movement += player.speed
+        for event in pygame.event.get(pygame.KEYUP, pump=False):
+            if event.key == pygame.K_UP:
+                player.movement += player.speed
+            if event.key == pygame.K_DOWN:
+                player.movement -= player.speed
+        for event in pygame.event.get(pygame.FINGERDOWN, pump=False):
+            x = event.x * screen.get_width()
+            y = event.y * screen.get_height()
+            fingers[event.finger_id] = (x, y)
+        for event in pygame.event.get(pygame.FINGERMOTION, pump=False):
+            x = event.x * screen.get_width()
+            y = event.y * screen.get_height()
+            fingers[event.finger_id] = (x, y)
+        for event in pygame.event.get(pygame.FINGERUP, pump=False):
+            fingers.pop(event.finger_id, None)
+
         if fingers:
             finger_id = list(fingers.keys())[0]
-            fx, fy = fingers[finger_id]
-            touch_y = int(fy * screen_height)
-            player.rect.centery = touch_y
+            _, fy = fingers[finger_id]
+            player.rect.centery = int(fy)
 
         screen.fill(bg_color)
         pygame.draw.rect(screen, accent_color, middle_strip)
