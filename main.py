@@ -294,6 +294,7 @@ async def main():
             finger_id = list(fingers.keys())[0]
             _, fy = fingers[finger_id]
             player.rect.centery = int(fy)
+            player.screen_constrain()
 
         screen.fill(bg_color)
         pygame.draw.rect(screen, accent_color, middle_strip)
